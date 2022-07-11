@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	
+	<http:listener-config name="proc-prospects-api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="${http.port}" protocol="HTTPS">
+            <tls:context>
+                <tls:key-store type="jks" path="${secure::tls.path}" alias="${secure::tls.alias}" keyPassword="${secure::tls.key}" password="${secure::tls.pwd}" />
+            </tls:context>
+        </http:listener-connection>
+    </http:listener-config>
+    <apikit:config name="proc-prospects-api-config" api="resource::0efa2e96-5661-4a95-ab6d-dc1f38566678:proc-prospects-api:1.0.1:raml:zip:proc-prospects-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<global-property doc:name="Global Property" doc:id="ea75bce4-a684-4e48-a66c-3e050032c297" name="mule-env" value="dev" />
+    <global-property doc:name="Global Property" doc:id="ac4dbe07-d7a4-4b18-9521-1f141faf4c2e" name="mule-key" value="DevEncryptionKey" />
+    <configuration-properties doc:name="Configuration properties" doc:id="dccedc00-547d-4db9-a6cf-b99b6881cd16" file="mule-app-config.properties" />
+    <secure-properties:config name="Env-Configs" doc:name="Secure Properties Config" doc:id="39b711c6-ca40-4f00-badf-f1cb964fb2f8" file="mule-${mule-env}.yaml" key="${mule-key}">
+        <secure-properties:encrypt algorithm="Blowfish" />
+    </secure-properties:config>
+    <configuration doc:name="Configuration" doc:id="dd7ef812-6028-4b55-a9e0-d82a61e0a2b7" defaultErrorHandler-ref="appGlobalErrorHandler" />
+    <configuration-properties doc:name="Configuration properties" doc:id="d5c44028-6505-4298-a448-ac28f48338c8" file="mule-exceptions.properties" />
+</mule>
