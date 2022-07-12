@@ -4,7 +4,14 @@ tls:
   key: "![3lEumFBKcKU=]"
   pwd: "![3lEumFBKcKU=]"
 
-salesforce:
-  user:  "![drKpu7GgG+uZSfWEKGDYT+iHf0NLQuDpFrk6UR1Lbsw=]"
-  pwd:  "$3cur3Password"
-  token:  "![g7P6CqL9Bry5YBUF7biicrQ11maKoN73qeEl3PdaaL8=]"
+sys-sf-api:
+  url:  "![1M21vMSwc/2ANyIWredQ7gObyf2jbp/HaPnkbpFJSS23/eMTx/nMGAX1e6RuG0q5]"
+  
+sys-mq-api:
+  url:  "![1M21vMSwc/0ZcXcBmYhidDiKfTslD6MLJ8WmrmAUPIqu2NBHGlWr/u08bTPeSLn5]"
+
+sys-s3-api:
+  url:  "![1M21vMSwc/3UVKHGdFtuYDnMu9WjVvF3E0NYyiWujfQXmMQd59ngUQ==]"
+
+sys-legacy-db-api:
+  url: "![1M21vMSwc/33L6Qtp+s1EX4mStaKW3ImpO/zV7cluTVqyWY/5+42ET3xSY7V9Jy9]"

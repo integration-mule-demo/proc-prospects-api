@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<sub-flow name="get-prospect-subflow" doc:id="e00e606a-33e2-4dab-bee2-2e8650d113d9" >
+		<json-logger:logger doc:name="Start" doc:id="e3c1c5e2-b126-44ce-bc41-f5e23577df85" config-ref="JSON_Logger_Config" message="Start get prospect"/>
+		<http:request method="GET" doc:name="Request Sys SF Api" doc:id="fd2c8180-da7b-454a-a790-8b1e90982d8f" config-ref="Request-sys-sf-api" path="/prospect">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"includeMigrated" : true
+}]]]></http:query-params>
+		</http:request>
+		<json-logger:logger doc:name="End" doc:id="2179f8c7-fa17-4e3d-9946-262678d84f9a" config-ref="JSON_Logger_Config" message="Finishing flow">
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+		</json-logger:logger>
+	</sub-flow>
+	<sub-flow name="post-prospect-salesforce-subflow" doc:id="930d23dc-c516-410b-8468-623e2f20aeb6" >
+		<set-variable value="#[payload]" doc:name="Set prospect" doc:id="f97389ab-060e-428b-b2e7-328d53a4283a" variableName="prospect"/>
+		<set-variable value="#[attributes.queryParams.'calledFromLegacy' default false]" doc:name="Set calledFromLegacy" doc:id="21ffb575-3540-496c-a10b-859e9c17d2ad" variableName="calledFromLegacy"/>
+		<json-logger:logger doc:name="Start" doc:id="678b617f-c7e8-44e2-841d-46d786be7710" config-ref="JSON_Logger_Config" message="Starting create prospect process on SF"/>
+		<http:request method="GET" doc:name="Request Sys SF Api" doc:id="a6e1b113-c5a2-4fa3-8e61-7d4e313d2eed" config-ref="Request-sys-sf-api" path="/prospect" >
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"Phone" : vars.prospect.phone,
+	"Name" : vars.prospect.name,
+	"includeMigrated" : true
+}]]]></http:query-params>
+		</http:request>
+		<choice doc:name="Possible Duplicates?" doc:id="6e75b1f8-1e53-479a-a0f2-03174c4b9c9b" >
+			<when expression="#[!isEmpty(payload)]">
+				<json-logger:logger doc:name="Step" doc:id="4a8a7449-8a4c-4443-9862-cd00c3601001" config-ref="JSON_Logger_Config" message="Duplicated info" tracePoint="FLOW">
+					<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+				</json-logger:logger>
+				<raise-error doc:name="Raise duplicate error" doc:id="db53b6e1-74a2-4acc-b7c8-ac16f8e92dfc" type="APP:DUPLICATE_PROSPECT" description='#["Name: [" ++  vars.prospect.name ++ "] or phone: [" ++  vars.prospect.phone ++ "] already exists on system"]'/>
+			</when>
+			<otherwise >
+				<http:request method="POST" doc:name="Create Prospect in SF" doc:id="20e30302-598d-4db0-b24f-ec2b3100e6f8" config-ref="Request-sys-sf-api" path="/prospect" >
+					<http:body ><![CDATA[#[vars.prospect]]]></http:body>
+				</http:request>
+				<set-variable value="#[vars.prospect ++ &#10;{ id :payload.id }]" doc:name="Set createdId" doc:id="d9f1a864-7ba6-4193-929f-2fa01eb37b87" variableName="prospect"/>
+				<json-logger:logger doc:name="Step" doc:id="c9e51365-343e-4889-9eb0-9722ede894d1" config-ref="JSON_Logger_Config" message="Prospect created in SF" tracePoint="FLOW">
+							<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+						</json-logger:logger>
+				<choice doc:name="Not called From Legacy?" doc:id="e7bef5f8-6149-48d5-b28d-718369900add">
+					<when expression="#[!vars.calledFromLegacy]">
+						<http:request method="POST" doc:name="Post messagge in Legacy Queue" doc:id="f414e2c8-39b5-44ab-b3d0-813b219f91f6" config-ref="Request-sys-mq-api" path="/prospect/onLegacy">
+					<http:body><![CDATA[#[vars.prospect]]]></http:body>
+				</http:request>
+						<json-logger:logger doc:name="Step" doc:id="9a33c179-365e-49ac-87de-154d6d435b4e" config-ref="JSON_Logger_Config" message="Message posted on Legacy Queue" tracePoint="FLOW" >
+							<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+						</json-logger:logger>
+					</when>
+					<otherwise >
+						<json-logger:logger doc:name="Step" doc:id="a6ed823e-63f3-4f06-8bb0-4844558136e7" config-ref="JSON_Logger_Config" message="Called from Legacy, avoid publish message on Legacy Queue" tracePoint="FLOW">
+					<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+				</json-logger:logger>
+					</otherwise>
+				</choice>
+				<http:request method="POST" doc:name="Store document" doc:id="66b519fc-15db-4ee0-927d-4bb3851f697a" config-ref="Request-sys-s3-api" path="/prospectInfo">
+					<http:body ><![CDATA[#[{
+  "prospectId": vars.prospect.id,
+  "document": "Not yet implemented"
+}]]]></http:body>
+				</http:request>
+				<json-logger:logger doc:name="Step" doc:id="0dcc775e-abcf-49b3-b4be-23497b321296" config-ref="JSON_Logger_Config" message="Document stored in S3" tracePoint="FLOW">
+					<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+				</json-logger:logger>
+				<ee:transform doc:name="Format Output" doc:id="92d72b44-c3c2-4aaf-ab98-8f42aeb3f66c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"prospectId": vars.prospect.id,
+  	"message": "Prospect was successfully created"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<json-logger:logger doc:name="End" doc:id="0aed88c3-4617-4dc9-ab3e-34025e64af76" config-ref="JSON_Logger_Config" message="Finishing flow" >
+					<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+				</json-logger:logger>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="post-prospect-legacy-subflow" doc:id="0f95e3cd-5c02-4ea5-a51d-16540c89e916" >
+		<set-variable value="#[payload]" doc:name="Set prospect" doc:id="62cb5490-c0da-408e-b58f-0eace8973fe3" variableName="prospect" />
+		<json-logger:logger doc:name="Start" doc:id="7ca64502-d94b-46d4-925b-51732ee4c073" config-ref="JSON_Logger_Config" message="Starting create prospect process on legacy"/>
+		<http:request method="POST" doc:name="Create Prospect in Legacy" doc:id="988b99d7-852c-4140-8bd9-0e5aa3460223" config-ref="Request-sys-legacy-db-api" path="/prospect"/>
+		<set-variable value="#[payload.id]" doc:name="Set externalId" doc:id="384ecb0f-a638-41c2-a293-03784c50bff3" variableName="externalId" />
+		<json-logger:logger doc:name="Step" doc:id="d0cf29ff-e077-404b-8b39-c469b3437132" config-ref="JSON_Logger_Config" message="Created in Legacy" tracePoint="FLOW">
+			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<http:request method="PATCH" doc:name="Update Prospect in SF" doc:id="4811b2c7-2521-4d16-a3e3-dc22df3ffc87" config-ref="Request-sys-sf-api" path="/prospect/{ID}">
+			<http:body><![CDATA[#[{
+	"externalId": vars.externalId as String
+}]]]></http:body>
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"ID" : vars.prospect.id
+}]]]></http:uri-params>
+		</http:request>
+		<json-logger:logger doc:name="Step" doc:id="9b703bfa-5b78-4a97-a697-bff15dce0df2" config-ref="JSON_Logger_Config" message="External Id updated" tracePoint="FLOW">
+			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<ee:transform doc:name="Format Output" doc:id="7c80e480-ddd3-45b1-80ae-7e442cafe78e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"salesforceId": vars.prospect.id,
+	"legacyId": vars.externalId,
+  	"message": "Prospect was successfully created"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="End" doc:id="21ead6d5-a5da-4b65-81e5-0e2142af339b" config-ref="JSON_Logger_Config" message="Finishing flow" >
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: ''
+}]]]></json-logger:content>
+		</json-logger:logger>
+	</sub-flow>
+</mule>

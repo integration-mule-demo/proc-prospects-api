@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
 	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
-	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
 http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
 	
 	<http:listener-config name="proc-prospects-api-httpListenerConfig">
-        <http:listener-connection host="0.0.0.0" port="${http.port}" protocol="HTTPS">
+        <http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
             <tls:context>
                 <tls:key-store type="jks" path="${secure::tls.path}" alias="${secure::tls.alias}" keyPassword="${secure::tls.key}" password="${secure::tls.pwd}" />
             </tls:context>
@@ -27,4 +28,37 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
     </secure-properties:config>
     <configuration doc:name="Configuration" doc:id="dd7ef812-6028-4b55-a9e0-d82a61e0a2b7" defaultErrorHandler-ref="appGlobalErrorHandler" />
     <configuration-properties doc:name="Configuration properties" doc:id="d5c44028-6505-4298-a448-ac28f48338c8" file="mule-exceptions.properties" />
+	<http:request-config name="Request-sys-sf-api" doc:name="HTTP Request configuration" doc:id="0fd1257c-e755-488f-905d-e9dbd9b3f4ad" basePath="/api" >
+		<http:request-connection protocol="HTTPS" host="${secure::sys-sf-api.url}">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+				<tls:key-store type="jks" path="${secure::tls.path}" alias="${secure::tls.alias}" keyPassword="${secure::tls.key}" password="${secure::tls.pwd}"/>
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="Request-sys-mq-api" doc:name="HTTP Request configuration" doc:id="77432583-7a61-49a3-b9e6-ef62a12fee22" basePath="/api" >
+		<http:request-connection protocol="HTTPS" host="${secure::sys-mq-api.url}">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+				<tls:key-store type="jks" path="${secure::tls.path}" alias="${secure::tls.alias}" keyPassword="${secure::tls.key}" password="${secure::tls.pwd}"/>
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="Request-sys-s3-api" doc:name="HTTP Request configuration" doc:id="75f56495-71e7-4dab-8612-85a1bec4d8c0" basePath="/api" >
+		<http:request-connection protocol="HTTPS" host="${secure::sys-s3-api.url}">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+				<tls:key-store type="jks" path="${secure::tls.path}" alias="${secure::tls.alias}" keyPassword="${secure::tls.key}" password="${secure::tls.pwd}"/>
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="Request-sys-legacy-db-api" doc:name="HTTP Request configuration" doc:id="324e900e-9305-4fad-ab8b-b241887230e4" basePath="/api" >
+		<http:request-connection protocol="HTTPS" host="${secure::sys-legacy-db-api.url}">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+				<tls:key-store type="jks" path="${secure::tls.path}" alias="${secure::tls.alias}" keyPassword="${secure::tls.key}" password="${secure::tls.pwd}"/>
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="621042df-7041-48ac-b12b-187dcb8da80b" environment="${mule-env}" />
 </mule>
