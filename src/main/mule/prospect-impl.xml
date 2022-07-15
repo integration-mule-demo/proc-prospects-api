@@ -23,7 +23,7 @@ http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/m
 		</json-logger:logger>
 	</sub-flow>
 	<sub-flow name="post-prospect-salesforce-subflow" doc:id="930d23dc-c516-410b-8468-623e2f20aeb6" >
-		<set-variable value="#[payload ++ {externalId: payload.id}]" doc:name="Set prospect with external Id" doc:id="f97389ab-060e-428b-b2e7-328d53a4283a" variableName="prospect"/>
+		<set-variable value="#[payload ++ {externalId: payload.id default ''}]" doc:name="Set prospect with external Id" doc:id="f97389ab-060e-428b-b2e7-328d53a4283a" variableName="prospect"/>
 		<set-variable value="#[vars.prospect - 'id']" doc:name="Set prospect without id" doc:id="485f5574-5ca7-49f3-b28f-5368dbd73cf2" variableName="prospect" />
 		<set-variable value="#[attributes.queryParams.'calledFromLegacy' default false]" doc:name="Set calledFromLegacy" doc:id="21ffb575-3540-496c-a10b-859e9c17d2ad" variableName="calledFromLegacy"/>
 		<json-logger:logger doc:name="Start" doc:id="678b617f-c7e8-44e2-841d-46d786be7710" config-ref="JSON_Logger_Config" message="Starting create prospect process on SF"/>
